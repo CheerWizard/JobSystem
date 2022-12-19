@@ -1,0 +1,6 @@
+cmake-build-debug
+.PVS-Studio
+/.idea/misc.xml
+/.idea/modules.xml
+/.idea/Threads.iml
+/.idea/vcs.xml
