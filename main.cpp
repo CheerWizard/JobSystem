@@ -117,11 +117,11 @@ struct timer {
     }
 };
 
-int main() {
-    auto& jobSystem = engine::core::JobSystem::get();
+using namespace engine::core;
 
+int main() {
     {
-        auto t = timer("Single thread test ");
+        auto t = timer("Main thread test ");
         Spin(100);
         Spin(100);
         Spin(100);
@@ -129,12 +129,30 @@ int main() {
     }
 
     {
-        int cores = 1;
-        auto t = timer("Jobs single execution test ");
-        for (int i = 0 ; i < cores * 2 ; i++) {
-            jobSystem.execute([] { Spin(100); });
-        }
-        jobSystem.wait();
+        auto t = timer("Render thread test ");
+        RenderScheduler->execute([] { Spin(100); });
+        RenderScheduler->execute([] { Spin(100); });
+        RenderScheduler->execute([] { Spin(100); });
+        RenderScheduler->execute([] { Spin(100); });
+        RenderScheduler->wait();
+    }
+
+    {
+        auto t = timer("Audio thread test ");
+        AudioScheduler->execute([] { Spin(100); });
+        AudioScheduler->execute([] { Spin(100); });
+        AudioScheduler->execute([] { Spin(100); });
+        AudioScheduler->execute([] { Spin(100); });
+        AudioScheduler->wait();
+    }
+
+    {
+        auto t = timer("Network thread test ");
+        NetworkScheduler->execute([] { Spin(100); });
+        NetworkScheduler->execute([] { Spin(100); });
+        NetworkScheduler->execute([] { Spin(100); });
+        NetworkScheduler->execute([] { Spin(100); });
+        NetworkScheduler->wait();
     }
 
     struct Data {
@@ -149,19 +167,19 @@ int main() {
     Data* dataSet = new Data[dataCount];
 
     {
-        auto t = timer("Single thread test ");
+        auto t = timer("Jobs group in main thread test ");
         for (uint32_t i = 0; i < dataCount; ++i) {
             dataSet[i].update(i);
         }
     }
 
     {
-        auto t = timer("Jobs multi execution test ");
+        auto t = timer("Jobs group in thread pool test ");
         const uint32_t groupSize = 1000;
-        jobSystem.execute(dataCount, groupSize, [&dataSet](engine::core::JobArgs args) {
+        ThreadPoolScheduler->execute(dataCount, groupSize, [&dataSet](engine::core::JobArgs args) {
             dataSet[args.index].update(1);
         });
-        jobSystem.wait();
+        ThreadPoolScheduler->wait();
     }
 
     delete[] dataSet;
